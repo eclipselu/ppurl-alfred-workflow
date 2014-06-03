@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.sunde.ppurl</string>
+	<key>category</key>
+	<string>Internet</string>
+	<key>connections</key>
+	<dict>
+		<key>FB7AF8C1-8894-47C3-A08A-9EE4EAEA7ED6</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>1E63B0B6-ABEE-4D0E-967E-BD45E74845AD</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Sunde</string>
+	<key>description</key>
+	<string>搜索皮皮书屋上的电子书</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>皮皮书屋</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>127</integer>
+				<key>keyword</key>
+				<string>ppurl</string>
+				<key>runningsubtext</key>
+				<string>正在搜索：{query}</string>
+				<key>script</key>
+				<string>#coding=utf-8
+
+import urllib2
+import urllib
+from xml.dom.minidom import Document
+from bs4 import BeautifulSoup
+
+
+def get_search_results():
+    params = urllib.urlencode({"s": "{query}"})
+    search = urllib2.urlopen('http://www.ppurl.com/?'+params).read()
+    html = BeautifulSoup(search)
+    results = html.find('div', id="search-book-list")
+    return results
+
+
+'''
+The xml output looks like this:
+
+&lt;?xml version="1.0"?&gt;
+&lt;items&gt;
+  &lt;item uid="desktop" arg="~/Desktop" valid="YES" autocomplete="Desktop" type="file"&gt;
+    &lt;title&gt;Desktop&lt;/title&gt;
+    &lt;subtitle&gt;~/Desktop&lt;/subtitle&gt;
+    &lt;icon type="fileicon"&gt;~/Desktop&lt;/icon&gt;
+  &lt;/item&gt;
+&lt;/items&gt;
+'''
+
+def xml_results(results):
+    doc = Document()
+    items = doc.createElement("items")
+
+    if not results:
+        xmlitem = doc.createElement("item")
+        attr = doc.createElement("title")
+        attr.appendChild(doc.createTextNode(u'哇哦，什么也没找到，←_← '))
+        xmlitem.appendChild(attr)
+        items.appendChild(xmlitem)
+    else:
+        for item in results.find('ul').findAll('li'):
+            for t in item.findAll('div', attrs={ 'class' : 'info' }):
+                title = t.find('a').get_text()
+                infos = t.find_all('p')
+                subtitle = ' | '.join([i.get_text() for i in infos[1:]])
+                url = t.find('a').get('href', '')
+
+                xmlitem = doc.createElement("item")
+                xmlitem.setAttribute("uid", url)
+                xmlitem.setAttribute("arg", url)
+                xmlitem.setAttribute("autocomplete", title)
+                xmlitem.setAttribute("valid", "YES")
+                attr = doc.createElement("title")
+                attr.appendChild(doc.createTextNode(title))
+                xmlitem.appendChild(attr)
+
+                attr = doc.createElement("subtitle")
+                attr.appendChild(doc.createTextNode(subtitle))
+                xmlitem.appendChild(attr)
+
+                attr = doc.createElement("icon")
+                attr.appendChild(doc.createTextNode("icon.png"))
+                xmlitem.appendChild(attr)
+
+                items.appendChild(xmlitem)
+
+    doc.appendChild(items)
+    return doc.toxml().encode('utf-8')
+
+print xml_results(get_search_results())</string>
+				<key>subtext</key>
+				<string>请输入书名</string>
+				<key>title</key>
+				<string>搜索皮皮书屋</string>
+				<key>type</key>
+				<integer>3</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>FB7AF8C1-8894-47C3-A08A-9EE4EAEA7ED6</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>plusspaces</key>
+				<false/>
+				<key>url</key>
+				<string>{query}</string>
+				<key>utf8</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.openurl</string>
+			<key>uid</key>
+			<string>1E63B0B6-ABEE-4D0E-967E-BD45E74845AD</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string></string>
+	<key>uidata</key>
+	<dict>
+		<key>1E63B0B6-ABEE-4D0E-967E-BD45E74845AD</key>
+		<dict>
+			<key>ypos</key>
+			<real>10</real>
+		</dict>
+		<key>FB7AF8C1-8894-47C3-A08A-9EE4EAEA7ED6</key>
+		<dict>
+			<key>ypos</key>
+			<real>10</real>
+		</dict>
+	</dict>
+	<key>webaddress</key>
+	<string>www.douban.com/people/41420430</string>
+</dict>
+</plist>
